@@ -158,10 +158,10 @@ gcc reciever1.c -o rest
 
 # Working:-
 
-## Sender Terminal
+## Sender Terminal:-
 <img src="./img/sender.png">
 
 
 
-## Reiever Terminal
+## Reciever Terminal:-
 <img src="./img/reciever.png">
