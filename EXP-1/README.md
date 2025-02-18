@@ -4,7 +4,7 @@
 ### Take a decimal number from user. Convert it to different bases (e.g.: 2,8,16 etc.) and send those values to message queue. Write three separate programs to read and display the binary, octal and hex value from the message queue distinctively.
 
 
-
+## Note:- This Part is for 3 Sender 1 Reciever
 
 # Binary Sender Code:-
 
@@ -337,4 +337,327 @@ gcc reciever1.c -o rest
 
 ## Hexadecimal Reciever Terminal:-
 <img src="./img/hexadecimal-reciever.png">
+
+
+## Note:- This Part is for 1 Sender 3 Reciever
+
+# Sender Code:-
+
+```bash
+ #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/msg.h>
+
+#define MAX_TEXT 512
+
+struct my_msg_st {
+    long int my_msg_type;
+    char some_text[MAX_TEXT];
+};
+
+int main() {
+    int running = 1;
+    struct my_msg_st some_data;
+    int msgid;
+    char buffer[MAX_TEXT];
+
+    msgid = msgget((key_t)1234, 0666 | IPC_CREAT);
+    if (msgid == -1) {
+        fprintf(stderr, "msgget failed with error: %d\n", errno);
+        exit(EXIT_FAILURE);
+    }
+
+    while (running) {
+        printf("Enter a decimal number (or 'end' to exit): ");
+        fgets(buffer, MAX_TEXT, stdin);
+        
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        if (strncmp(buffer, "end", 3) == 0) {
+            strcpy(some_data.some_text, "end");
+            some_data.my_msg_type = 2;
+        } else {
+            strcpy(some_data.some_text, buffer);
+            some_data.my_msg_type = 2;
+        }
+
+        if (msgsnd(msgid, (void*)&some_data, MAX_TEXT, 0) == -1) {
+            fprintf(stderr, "msgsnd failed\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if (strncmp(buffer, "end", 3) == 0) {
+            running = 0;
+        }
+    }
+
+    exit(EXIT_SUCCESS);
+}
+
+```
+
+## Steps to Execute:-
+```bash
+gcc sender11.c -o send1
+```
+
+```bash
+./send1
+```
+
+# Binary Reciever Code:-
+
+```bash
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/msg.h>
+
+#define MAX_TEXT 512
+
+struct my_msg_st {
+    long int my_msg_type;
+    char some_text[MAX_TEXT];
+};
+
+void decimalToBinary(int num, char *binStr) {
+    if (num == 0) {
+        strcpy(binStr, "0");
+        return;
+    }
+
+    char temp[MAX_TEXT] = {0};
+    int i = 0;
+
+    while (num > 0) {
+        temp[i++] = (num % 2) + '0';
+        num /= 2;
+    }
+
+    temp[i] = '\0';
+
+    
+    int len = strlen(temp);
+    for (int j = 0; j < len; j++) {
+        binStr[j] = temp[len - j - 1];
+    }
+    binStr[len] = '\0';
+}
+
+int main() {
+    int running = 1;
+    int msgid;
+    struct my_msg_st some_data;
+    long int msg_to_receive = 2;
+
+    msgid = msgget((key_t)1234, 0666 | IPC_CREAT);
+    if (msgid == -1) {
+        fprintf(stderr, "msgget failed with error: %d\n", errno);
+        exit(EXIT_FAILURE);
+    }
+
+    while (running) {
+        if (msgrcv(msgid, (void*)&some_data, MAX_TEXT, msg_to_receive, 0) == -1) {
+            fprintf(stderr, "msgrcv failed with error: %d\n", errno);
+            exit(EXIT_FAILURE);
+        }
+
+        if (strncmp(some_data.some_text, "end", 3) == 0) {
+            printf("Terminating receiver.\n");
+            running = 0;
+        } else {
+            int num = atoi(some_data.some_text);
+            char binStr[MAX_TEXT];
+            decimalToBinary(num, binStr);
+            printf("Binary Representation: %s\n", binStr);
+        }
+    }
+
+    if (msgctl(msgid, IPC_RMID, 0) == -1) {
+        fprintf(stderr, "msgctl(IPC_RMID) failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+```
+
+## Steps to Execute:-
+```bash
+gcc reciever12.c -o rest12
+```
+
+```bash
+./rest12
+```
+
+# Octal Reciever Code:-
+
+```bash
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/msg.h>
+
+#define MAX_TEXT 512
+
+struct my_msg_st {
+    long int my_msg_type;
+    char some_text[MAX_TEXT];
+};
+
+void decimalToOctal(int num, char *octalStr) {
+    snprintf(octalStr, MAX_TEXT, "%o", num);
+}
+
+int main() {
+    int running = 1;
+    int msgid;
+    struct my_msg_st some_data;
+    long int msg_to_receive = 2;
+
+    msgid = msgget((key_t)1234, 0666 | IPC_CREAT);
+    if (msgid == -1) {
+        fprintf(stderr, "msgget failed with error: %d\n", errno);
+        exit(EXIT_FAILURE);
+    }
+
+    while (running) {
+        if (msgrcv(msgid, (void*)&some_data, MAX_TEXT, msg_to_receive, 0) == -1) {
+            fprintf(stderr, "msgrcv failed with error: %d\n", errno);
+            exit(EXIT_FAILURE);
+        }
+
+        if (strncmp(some_data.some_text, "end", 3) == 0) {
+            printf("Terminating receiver.\n");
+            running = 0;
+        } else {
+            int num = atoi(some_data.some_text);
+            char octalStr[MAX_TEXT];
+            decimalToOctal(num, octalStr);
+            printf("Octal Representation: %s\n", octalStr);
+        }
+    }
+
+    if (msgctl(msgid, IPC_RMID, 0) == -1) {
+        fprintf(stderr, "msgctl(IPC_RMID) failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+```
+
+## Steps to Execute:-
+```bash
+gcc reciever13.c -o rest13
+```
+
+```bash
+./rest13
+```
+
+# Hexadecimal Reciever Code:-
+
+```bash
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/msg.h>
+
+#define MAX_TEXT 512
+
+struct my_msg_st {
+    long int my_msg_type;
+    char some_text[MAX_TEXT];
+};
+
+void decimalToHexadecimal(int num, char *hexStr) {
+    snprintf(hexStr, MAX_TEXT, "%X", num);
+}
+
+int main() {
+    int running = 1;
+    int msgid;
+    struct my_msg_st some_data;
+    long int msg_to_receive = 2;
+
+    msgid = msgget((key_t)1234, 0666 | IPC_CREAT);
+    if (msgid == -1) {
+        fprintf(stderr, "msgget failed with error: %d\n", errno);
+        exit(EXIT_FAILURE);
+    }
+
+    while (running) {
+        if (msgrcv(msgid, (void*)&some_data, MAX_TEXT, msg_to_receive, 0) == -1) {
+            fprintf(stderr, "msgrcv failed with error: %d\n", errno);
+            exit(EXIT_FAILURE);
+        }
+
+        if (strncmp(some_data.some_text, "end", 3) == 0) {
+            printf("Terminating receiver.\n");
+            running = 0;
+        } else {
+            int num = atoi(some_data.some_text);
+            char hexStr[MAX_TEXT];
+            decimalToHexadecimal(num, hexStr);
+            printf("Hexadecimal Representation: %s\n", hexStr);
+        }
+    }
+
+    if (msgctl(msgid, IPC_RMID, 0) == -1) {
+        fprintf(stderr, "msgctl(IPC_RMID) failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+
+```
+
+## Steps to Execute:-
+```bash
+gcc reciever11.c -o rest11
+```
+
+```bash
+./rest11
+```
+
+# Working:-
+
+##  Binary Sender Terminal:-
+<img src="./img/binary-sendercode.png">
+
+
+
+## Binary Reciever Terminal:-
+<img src="./img/binary-recievercode.png">
+
+
+##  Octal Sender Terminal:-
+<img src="./img/octal-sendercode.png">
+
+
+
+## Octal Reciever Terminal:-
+<img src="./img/octal-recievercode.png">
+
+
+##  Hexadecimal Sender Terminal:-
+<img src="./img/hexadeximal-sendercode.png">
+
+
+
+## Hexadecimal Reciever Terminal:-
+<img src="./img/hexadeximal-recievercode.png">
 
