@@ -641,7 +641,7 @@ gcc reciever11.c -o rest11
 
 
 ## Binary Reciever Terminal:-
-<img src="./img/binary-recievercode.png">
+<img src="./img/octal-recievercode.png">
 
 
 ##  Octal Sender Terminal:-
@@ -650,7 +650,7 @@ gcc reciever11.c -o rest11
 
 
 ## Octal Reciever Terminal:-
-<img src="./img/octal-recievercode.png">
+<img src="./img/binary-recievercode.png">
 
 
 ##  Hexadecimal Sender Terminal:-
