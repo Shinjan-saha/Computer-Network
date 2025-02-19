@@ -150,4 +150,4 @@ gcc server.c -o server
 ```
 
 ## Working:-
-<img width ="1000" height = "100" src ="./img/socketworking.png">
+<img  src ="./img/socketworking.png">
