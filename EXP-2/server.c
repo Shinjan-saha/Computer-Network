@@ -4,11 +4,12 @@
 #include <sys/un.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>  // <-- Add this header file
 
 int main() 
 { 
     int server_sockfd, client_sockfd; 
-    int server_len, client_len; 
+    socklen_t client_len;  // <-- Change int to socklen_t
     struct sockaddr_un server_address; 
     struct sockaddr_un client_address; 
 
@@ -16,20 +17,20 @@ int main()
 
     server_sockfd = socket(AF_UNIX, SOCK_STREAM, 0); 
     server_address.sun_family = AF_UNIX; 
-    strcpy(server_address.sun_path, "server_socket"); 
-    server_len = sizeof(server_address); 
+    strcpy(server_address.sun_path, "server_socket");  // <-- Now strcpy is properly declared
 
+    int server_len = sizeof(server_address); 
     bind(server_sockfd, (struct sockaddr *)&server_address, server_len); 
     listen(server_sockfd, 5); 
 
-    while(1) 
+    while (1) 
     { 
         int stream[5]; 
         printf("server waiting\n"); 
         int i, j; 
 
         client_len = sizeof(client_address); 
-        client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_address, &client_len); 
+        client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_address, &client_len);  // <-- Fixed type
 
         for(i = 0; i < 5; i++) 
         { 
