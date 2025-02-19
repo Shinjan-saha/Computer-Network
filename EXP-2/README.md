@@ -74,7 +74,7 @@ gcc client.c -o clinet
 ```
 
 
-## Client Code:-
+## Server Code:-
 
 ```bash
 #include <sys/types.h>
