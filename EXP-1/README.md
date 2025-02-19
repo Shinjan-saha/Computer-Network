@@ -358,45 +358,73 @@ struct my_msg_st {
     char some_text[MAX_TEXT];
 };
 
+void decimalToBinary(int num, char *binStr) {
+    if (num == 0) {
+        strcpy(binStr, "0");
+        return;
+    }
+    char temp[MAX_TEXT] = {0};
+    int i = 0;
+    while (num > 0) {
+        temp[i++] = (num % 2) + '0';
+        num /= 2;
+    }
+    temp[i] = '\0';
+    int len = strlen(temp);
+    for (int j = 0; j < len; j++) {
+        binStr[j] = temp[len - j - 1];
+    }
+    binStr[len] = '\0';
+}
+
 int main() {
     int running = 1;
     struct my_msg_st some_data;
     int msgid;
     char buffer[MAX_TEXT];
-
+    char binStr[MAX_TEXT], octalStr[MAX_TEXT], hexStr[MAX_TEXT];
+    
     msgid = msgget((key_t)1234, 0666 | IPC_CREAT);
     if (msgid == -1) {
         fprintf(stderr, "msgget failed with error: %d\n", errno);
         exit(EXIT_FAILURE);
     }
-
+    
     while (running) {
         printf("Enter a decimal number (or 'end' to exit): ");
         fgets(buffer, MAX_TEXT, stdin);
-        
         buffer[strcspn(buffer, "\n")] = 0;
-
+        
         if (strncmp(buffer, "end", 3) == 0) {
             strcpy(some_data.some_text, "end");
             some_data.my_msg_type = 2;
-        } else {
-            strcpy(some_data.some_text, buffer);
-            some_data.my_msg_type = 2;
-        }
-
-        if (msgsnd(msgid, (void*)&some_data, MAX_TEXT, 0) == -1) {
-            fprintf(stderr, "msgsnd failed\n");
-            exit(EXIT_FAILURE);
-        }
-
-        if (strncmp(buffer, "end", 3) == 0) {
+            msgsnd(msgid, (void*)&some_data, MAX_TEXT, 0);
+            some_data.my_msg_type = 3;
+            msgsnd(msgid, (void*)&some_data, MAX_TEXT, 0);
+            some_data.my_msg_type = 4;
+            msgsnd(msgid, (void*)&some_data, MAX_TEXT, 0);
             running = 0;
+        } else {
+            int num = atoi(buffer);
+            decimalToBinary(num, binStr);
+            snprintf(octalStr, MAX_TEXT, "%o", num);
+            snprintf(hexStr, MAX_TEXT, "%X", num);
+            
+            some_data.my_msg_type = 2;
+            strcpy(some_data.some_text, binStr);
+            msgsnd(msgid, (void*)&some_data, MAX_TEXT, 0);
+            
+            some_data.my_msg_type = 3;
+            strcpy(some_data.some_text, octalStr);
+            msgsnd(msgid, (void*)&some_data, MAX_TEXT, 0);
+            
+            some_data.my_msg_type = 4;
+            strcpy(some_data.some_text, hexStr);
+            msgsnd(msgid, (void*)&some_data, MAX_TEXT, 0);
         }
     }
-
     exit(EXIT_SUCCESS);
 }
-
 ```
 
 ## Steps to Execute:-
@@ -425,30 +453,6 @@ struct my_msg_st {
     char some_text[MAX_TEXT];
 };
 
-void decimalToBinary(int num, char *binStr) {
-    if (num == 0) {
-        strcpy(binStr, "0");
-        return;
-    }
-
-    char temp[MAX_TEXT] = {0};
-    int i = 0;
-
-    while (num > 0) {
-        temp[i++] = (num % 2) + '0';
-        num /= 2;
-    }
-
-    temp[i] = '\0';
-
-    
-    int len = strlen(temp);
-    for (int j = 0; j < len; j++) {
-        binStr[j] = temp[len - j - 1];
-    }
-    binStr[len] = '\0';
-}
-
 int main() {
     int running = 1;
     int msgid;
@@ -456,33 +460,11 @@ int main() {
     long int msg_to_receive = 2;
 
     msgid = msgget((key_t)1234, 0666 | IPC_CREAT);
-    if (msgid == -1) {
-        fprintf(stderr, "msgget failed with error: %d\n", errno);
-        exit(EXIT_FAILURE);
-    }
-
     while (running) {
-        if (msgrcv(msgid, (void*)&some_data, MAX_TEXT, msg_to_receive, 0) == -1) {
-            fprintf(stderr, "msgrcv failed with error: %d\n", errno);
-            exit(EXIT_FAILURE);
-        }
-
-        if (strncmp(some_data.some_text, "end", 3) == 0) {
-            printf("Terminating receiver.\n");
-            running = 0;
-        } else {
-            int num = atoi(some_data.some_text);
-            char binStr[MAX_TEXT];
-            decimalToBinary(num, binStr);
-            printf("Binary Representation: %s\n", binStr);
-        }
+        msgrcv(msgid, (void*)&some_data, MAX_TEXT, msg_to_receive, 0);
+        if (strncmp(some_data.some_text, "end", 3) == 0) running = 0;
+        else printf("Binary Representation: %s\n", some_data.some_text);
     }
-
-    if (msgctl(msgid, IPC_RMID, 0) == -1) {
-        fprintf(stderr, "msgctl(IPC_RMID) failed\n");
-        exit(EXIT_FAILURE);
-    }
-
     exit(EXIT_SUCCESS);
 }
 ```
@@ -513,46 +495,21 @@ struct my_msg_st {
     char some_text[MAX_TEXT];
 };
 
-void decimalToOctal(int num, char *octalStr) {
-    snprintf(octalStr, MAX_TEXT, "%o", num);
-}
-
 int main() {
     int running = 1;
     int msgid;
     struct my_msg_st some_data;
-    long int msg_to_receive = 2;
+    long int msg_to_receive = 3;
 
     msgid = msgget((key_t)1234, 0666 | IPC_CREAT);
-    if (msgid == -1) {
-        fprintf(stderr, "msgget failed with error: %d\n", errno);
-        exit(EXIT_FAILURE);
-    }
-
     while (running) {
-        if (msgrcv(msgid, (void*)&some_data, MAX_TEXT, msg_to_receive, 0) == -1) {
-            fprintf(stderr, "msgrcv failed with error: %d\n", errno);
-            exit(EXIT_FAILURE);
-        }
-
-        if (strncmp(some_data.some_text, "end", 3) == 0) {
-            printf("Terminating receiver.\n");
-            running = 0;
-        } else {
-            int num = atoi(some_data.some_text);
-            char octalStr[MAX_TEXT];
-            decimalToOctal(num, octalStr);
-            printf("Octal Representation: %s\n", octalStr);
-        }
+        msgrcv(msgid, (void*)&some_data, MAX_TEXT, msg_to_receive, 0);
+        if (strncmp(some_data.some_text, "end", 3) == 0) running = 0;
+        else printf("Octal Representation: %s\n", some_data.some_text);
     }
-
-    if (msgctl(msgid, IPC_RMID, 0) == -1) {
-        fprintf(stderr, "msgctl(IPC_RMID) failed\n");
-        exit(EXIT_FAILURE);
-    }
-
     exit(EXIT_SUCCESS);
 }
+
 ```
 
 ## Steps to Execute:-
@@ -581,47 +538,20 @@ struct my_msg_st {
     char some_text[MAX_TEXT];
 };
 
-void decimalToHexadecimal(int num, char *hexStr) {
-    snprintf(hexStr, MAX_TEXT, "%X", num);
-}
-
 int main() {
     int running = 1;
     int msgid;
     struct my_msg_st some_data;
-    long int msg_to_receive = 2;
+    long int msg_to_receive = 4;
 
     msgid = msgget((key_t)1234, 0666 | IPC_CREAT);
-    if (msgid == -1) {
-        fprintf(stderr, "msgget failed with error: %d\n", errno);
-        exit(EXIT_FAILURE);
-    }
-
     while (running) {
-        if (msgrcv(msgid, (void*)&some_data, MAX_TEXT, msg_to_receive, 0) == -1) {
-            fprintf(stderr, "msgrcv failed with error: %d\n", errno);
-            exit(EXIT_FAILURE);
-        }
-
-        if (strncmp(some_data.some_text, "end", 3) == 0) {
-            printf("Terminating receiver.\n");
-            running = 0;
-        } else {
-            int num = atoi(some_data.some_text);
-            char hexStr[MAX_TEXT];
-            decimalToHexadecimal(num, hexStr);
-            printf("Hexadecimal Representation: %s\n", hexStr);
-        }
+        msgrcv(msgid, (void*)&some_data, MAX_TEXT, msg_to_receive, 0);
+        if (strncmp(some_data.some_text, "end", 3) == 0) running = 0;
+        else printf("Hexadecimal Representation: %s\n", some_data.some_text);
     }
-
-    if (msgctl(msgid, IPC_RMID, 0) == -1) {
-        fprintf(stderr, "msgctl(IPC_RMID) failed\n");
-        exit(EXIT_FAILURE);
-    }
-
     exit(EXIT_SUCCESS);
 }
-
 ```
 
 ## Steps to Execute:-
@@ -635,29 +565,4 @@ gcc reciever11.c -o rest11
 
 # Working:-
 
-##  Binary Sender Terminal:-
-<img src="./img/binary-sendercode.png">
-
-
-
-## Binary Reciever Terminal:-
-<img src="./img/octal-recievercode.png">
-
-
-##  Octal Sender Terminal:-
-<img src="./img/octal-sendercode.png">
-
-
-
-## Octal Reciever Terminal:-
-<img src="./img/binary-recievercode.png">
-
-
-##  Hexadecimal Sender Terminal:-
-<img src="./img/hexadeximal-sendercode.png">
-
-
-
-## Hexadecimal Reciever Terminal:-
-<img src="./img/hexadeximal-recievercode.png">
-
+<img src="./img/senderlogicchnaged.png">
