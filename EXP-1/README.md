@@ -566,3 +566,9 @@ gcc reciever11.c -o rest11
 # Working:-
 
 <img src="./img/senderlogicchnaged.png">
+
+<br >
+
+# PrintOut Layout for Practical Copy;-
+
+<img src="./img/print-layout-exp1.png">
