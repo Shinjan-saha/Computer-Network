@@ -1,8 +1,4 @@
-/*
- * server.c
- * UDP server that receives a 4-bit data word, computes the Hamming(7,4) codeword,
- * and sends the codeword back to the client.
- */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,18 +9,16 @@
 #define PORT 8888
 #define BUFFER_SIZE 1024
 
-// Function to encode a 4-bit dataword using Hamming(7,4) code.
-// The input string "data" must be exactly 4 characters long ('0' or '1').
-// Returns a pointer to a statically allocated string holding the 7-bit codeword.
+
 char* hamming_encode(const char *data) {
-    // Ensure the data word is 4 bits.
-    static char codeword[8];  // 7 bits plus the null terminator
+   
+    static char codeword[8];  
     if (strlen(data) != 4) {
         fprintf(stderr, "Error: Data word must be exactly 4 bits.\n");
         exit(EXIT_FAILURE);
     }
 
-    // Convert input characters to bit values (0 or 1)
+    
     int d[4];
     for (int i = 0; i < 4; i++) {
         if (data[i] != '0' && data[i] != '1') {
@@ -34,14 +28,12 @@ char* hamming_encode(const char *data) {
         d[i] = data[i] - '0';
     }
 
-    // Compute parity bits using XOR (⊕)
-    int p1 = d[0] ^ d[1] ^ d[3];  // parity for positions 1 (covers d0, d1, d3)
-    int p2 = d[0] ^ d[2] ^ d[3];  // parity for position 2 (covers d0, d2, d3)
-    int p3 = d[1] ^ d[2] ^ d[3];  // parity for position 4 (covers d1, d2, d3)
+    
+    int p1 = d[0] ^ d[1] ^ d[3];  
+    int p2 = d[0] ^ d[2] ^ d[3];  
+    int p3 = d[1] ^ d[2] ^ d[3]; 
 
-    // Arrange bits into the codeword: positions 1 to 7.
-    // Positions:  1    2    3    4    5    6    7
-    // Bits:     p1   p2    d0   p3    d1   d2   d3
+    
     codeword[0] = p1 + '0';
     codeword[1] = p2 + '0';
     codeword[2] = d[0] + '0';
@@ -67,7 +59,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    // Zero out the server address structure
+   
     memset(&server_addr, 0, sizeof(server_addr));
 
     // Fill in the server address information.
@@ -75,7 +67,7 @@ int main() {
     server_addr.sin_addr.s_addr = INADDR_ANY;  // Accept any incoming address
     server_addr.sin_port = htons(PORT);
 
-    // Bind the socket to the port
+    
     if (bind(sockfd, (const struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("Server: bind failed");
         close(sockfd);
@@ -84,7 +76,7 @@ int main() {
     
     printf("UDP Server is running on port %d...\n", PORT);
 
-    // Wait for incoming messages in an infinite loop.
+    
     while (1) {
         memset(buffer, 0, BUFFER_SIZE);
         num_bytes = recvfrom(sockfd, buffer, BUFFER_SIZE - 1, 0,
@@ -97,11 +89,11 @@ int main() {
         buffer[num_bytes] = '\0';
         printf("Received data word \"%s\" from client.\n", buffer);
 
-        // Compute Hamming code (7,4) for the incoming data
+       
         char *codeword = hamming_encode(buffer);
         printf("Computed Hamming codeword: %s\n", codeword);
 
-        // Send the codeword back to the client
+        
         if (sendto(sockfd, codeword, strlen(codeword), 0,
                    (struct sockaddr*)&client_addr, addr_len) < 0) {
             perror("Server: sendto failed");
